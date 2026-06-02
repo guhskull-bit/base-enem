@@ -1,41 +1,10 @@
-"use client";
+import { EditStudentPageClient } from "@/components/admin/edit-student-page-client";
 
-import { StudentForm } from "@/components/student-form";
-import { useDemoStore } from "@/components/demo-store-provider";
-
-export default function EditStudentPage({ params }: { params: { id: string } }) {
-  const { store, upsertProfile } = useDemoStore();
-  const profile = store.profiles.find((item) => item.id === params.id);
-
-  if (!profile) {
-    return <p>Aluno não encontrado.</p>;
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Editar aluno</h1>
-      <StudentForm
-        classOptions={store.classes.map((item) => ({ id: item.id, name: item.name }))}
-        initialValues={{
-          id: profile.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          class_id: profile.class_id ?? "",
-          role: profile.role,
-          active: profile.active,
-        }}
-        onSubmit={(values) =>
-          upsertProfile({
-            ...profile,
-            id: profile.id,
-            full_name: values.full_name,
-            email: values.email,
-            class_id: values.class_id,
-            role: values.role,
-            active: values.active,
-          })
-        }
-      />
-    </div>
-  );
+export default async function EditStudentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <EditStudentPageClient id={id} />;
 }

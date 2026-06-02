@@ -1,6 +1,10 @@
 import { ExamRunner } from "@/components/exam-runner";
 
-export default function SimuladoPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function SimuladoPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   return <ExamRunner examId={id} />;
 }
