@@ -1,5 +1,6 @@
 "use client";
 
+import { saveStudentAction } from "@/app/actions/admin";
 import { StudentForm } from "@/components/student-form";
 import { useDemoStore } from "@/components/demo-store-provider";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { calculateScore, statusFromScore } from "@/lib/calculations";
 import { isInstitutionalEmail } from "@/lib/utils";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function AdminStudentsPage() {
   const { store, upsertProfile, toggleProfileActive } = useDemoStore();
+  const [error, setError] = useState("");
+  const useSupabase = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
   return (
     <div className="space-y-6">
@@ -19,16 +23,40 @@ export default function AdminStudentsPage() {
         <p className="text-sm text-slate-500">Cadastro, vínculo de turma e controle de acesso.</p>
       </div>
 
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
       <StudentForm
         classOptions={store.classes.map((item) => ({ id: item.id, name: item.name }))}
-        onSubmit={(values) => {
-          if (!isInstitutionalEmail(values.email)) return;
+        onSubmit={async (values) => {
+          if (!isInstitutionalEmail(values.email)) {
+            setError("Use um e-mail institucional @santamarcelina.edu.br.");
+            return;
+          }
+
+          setError("");
+          if (useSupabase) {
+            const formData = new FormData();
+            if (values.id) formData.set("id", values.id);
+            formData.set("full_name", values.full_name);
+            formData.set("email", values.email);
+            formData.set("class_id", values.class_id);
+            formData.set("role", values.role);
+            formData.set("active", values.active ? "1" : "0");
+            formData.set("password", values.password);
+
+            const result = await saveStudentAction(formData);
+            if (result.error) {
+              setError(result.error);
+              return;
+            }
+          }
+
           upsertProfile({
             id: values.id ?? `student-${Date.now()}`,
             email: values.email,
             full_name: values.full_name,
             role: values.role,
-            class_id: values.class_id,
+            class_id: values.class_id || null,
             active: values.active,
             created_at: new Date().toISOString(),
           });

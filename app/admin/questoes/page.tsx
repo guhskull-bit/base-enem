@@ -1,12 +1,13 @@
 "use client";
 
 import { useDemoStore } from "@/components/demo-store-provider";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function AdminQuestionsPage() {
   const { store, toggleQuestionActive } = useDemoStore();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -18,15 +19,19 @@ export default function AdminQuestionsPage() {
           <Link href="/admin/questoes/nova">Nova questão</Link>
         </Button>
       </div>
+
       <div className="grid gap-4">
         {store.questions.map((question) => (
           <Card key={question.id}>
             <CardContent className="flex flex-wrap items-center justify-between gap-4">
-              <div>
+              <div className="space-y-1">
                 <p className="font-semibold">{question.statement}</p>
                 <p className="text-sm text-slate-500">
                   {question.knowledge_area} · {question.subject} · {question.topic}
                 </p>
+                {question.image_url ? (
+                  <p className="text-xs font-medium text-gold-700">Possui imagem</p>
+                ) : null}
               </div>
               <div className="flex items-center gap-3">
                 <Button asChild variant="outline">

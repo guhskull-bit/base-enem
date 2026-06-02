@@ -21,6 +21,8 @@ export type ClassGroup = {
 export type Question = {
   id: string;
   statement: string;
+  image_url?: string | null;
+  image_alt?: string | null;
   option_a: string;
   option_b: string;
   option_c: string;

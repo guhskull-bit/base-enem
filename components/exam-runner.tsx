@@ -1,10 +1,9 @@
 "use client";
 
 import { AppLayout } from "@/components/app-layout";
-import { AlternativeButton } from "@/components/alternative-button";
 import { FeedbackBox } from "@/components/feedback-box";
+import { QuestionCard } from "@/components/question-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Timer } from "@/components/timer";
 import { useDemoStore } from "@/components/demo-store-provider";
@@ -42,10 +41,26 @@ export function ExamRunner({ examId }: { examId: string }) {
   const selectedAnswer = selected ?? null;
   const progress = questions.length ? ((index + (revealed ? 1 : 0)) / questions.length) * 100 : 0;
 
-  if (!profile || !exam || !currentQuestion) {
+  if (!profile || !exam) {
     return (
       <AppLayout>
         <p>Simulado indisponível.</p>
+      </AppLayout>
+    );
+  }
+
+  if (!exam.active) {
+    return (
+      <AppLayout>
+        <p>Este simulado não está disponível para alunos.</p>
+      </AppLayout>
+    );
+  }
+
+  if (!currentQuestion) {
+    return (
+      <AppLayout>
+        <p>Este simulado ainda não possui questões cadastradas.</p>
       </AppLayout>
     );
   }
@@ -133,31 +148,13 @@ export function ExamRunner({ examId }: { examId: string }) {
           </div>
         </header>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base leading-6">{currentQuestion.statement}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              ["A", currentQuestion.option_a],
-              ["B", currentQuestion.option_b],
-              ["C", currentQuestion.option_c],
-              ["D", currentQuestion.option_d],
-              ["E", currentQuestion.option_e],
-            ].map(([letter, text]) => (
-              <AlternativeButton
-                key={letter}
-                letter={letter as Question["correct_option"]}
-                text={text as string}
-                selected={selectedAnswer === letter}
-                correct={revealed && currentQuestion.correct_option === letter}
-                wrong={revealed && selectedAnswer === letter && currentQuestion.correct_option !== letter}
-                onClick={() => handleAnswer(letter as Question["correct_option"])}
-                disabled={revealed}
-              />
-            ))}
-          </CardContent>
-        </Card>
+        <QuestionCard
+          question={currentQuestion}
+          selected={selectedAnswer}
+          onSelect={handleAnswer}
+          revealed={revealed}
+          correctOption={currentQuestion.correct_option}
+        />
 
         {feedback ? (
           <FeedbackBox

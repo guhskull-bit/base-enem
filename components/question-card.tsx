@@ -29,6 +29,15 @@ export function QuestionCard({
         <CardTitle className="text-base leading-6">{question.statement}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {question.image_url ? (
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+            <img
+              src={question.image_url}
+              alt={question.image_alt || "Imagem da questão"}
+              className="h-auto w-full max-h-80 object-contain"
+            />
+          </div>
+        ) : null}
         {options.map(([letter, text]) => (
           <AlternativeButton
             key={letter}
