@@ -336,18 +336,23 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   });
 
   if (profileError) {
+    console.error("Profile insert error", {
+      message: profileError.message,
+      code: profileError.code,
+      details: profileError.details,
+      hint: profileError.hint,
+    });
     console.error("[Base ENEM] Falha ao criar profile", {
       userId,
       email,
+      classId,
       message: profileError.message,
-    });
-    console.error("[Base ENEM] profile insert failed after auth create", {
-      userId,
-      email,
-      message: profileError.message,
+      code: profileError.code,
     });
     await supabase.auth.admin.deleteUser(userId);
-    return { error: "Não foi possível criar o perfil do aluno. O usuário Auth foi revertido." };
+    return {
+      error: `Erro ao criar profile: ${profileError.message} | code: ${profileError.code ?? ""} | details: ${profileError.details ?? ""} | hint: ${profileError.hint ?? ""}`,
+    };
   }
 
   console.info("[Base ENEM] Profile criado com sucesso", { userId, email });
