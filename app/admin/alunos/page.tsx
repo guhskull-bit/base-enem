@@ -34,6 +34,7 @@ export default function AdminStudentsPage() {
           }
 
           setError("");
+          let savedId = values.id ?? `student-${Date.now()}`;
           if (useSupabase) {
             const formData = new FormData();
             if (values.id) formData.set("id", values.id);
@@ -49,10 +50,11 @@ export default function AdminStudentsPage() {
               setError(result.error);
               return;
             }
+            if (result.id) savedId = result.id;
           }
 
           upsertProfile({
-            id: values.id ?? `student-${Date.now()}`,
+            id: savedId,
             email: values.email,
             full_name: values.full_name,
             role: values.role,

@@ -218,15 +218,31 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   const active = asBoolean(formData.get("active"), true);
   const password = asString(formData.get("password"));
 
+  console.info("[Base ENEM] saveStudentAction", {
+    mode: id ? "update" : "create",
+    email,
+    role,
+    hasClass: Boolean(classId),
+    active,
+  });
+
   if (!fullName || !email) {
     return { error: "Informe nome e e-mail do usuário." };
   }
 
-  if (!isInstitutionalEmail(email)) {
+  if (!email.endsWith("@santamarcelina.edu.br") || !isInstitutionalEmail(email)) {
     return { error: "Use um e-mail institucional @santamarcelina.edu.br." };
   }
 
+  if (!classId) {
+    return { error: "Selecione uma turma para o aluno." };
+  }
+
   if (!id && password.length < 6) {
+    return { error: "A senha deve ter pelo menos 6 caracteres." };
+  }
+
+  if (id && password && password.length < 6) {
     return { error: "A senha deve ter pelo menos 6 caracteres." };
   }
 
@@ -242,11 +258,39 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
       })
       .eq("id", id);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error("[Base ENEM] profile update failed", {
+        userId: id,
+        email,
+        message: error.message,
+      });
+      return { error: error.message };
+    }
+
+    const authUpdatePayload: {
+      password?: string;
+      email?: string;
+      user_metadata?: { full_name: string; role: "student" | "admin" };
+    } = {
+      email,
+      user_metadata: {
+        full_name: fullName,
+        role,
+      },
+    };
 
     if (password) {
-      const { error: passwordError } = await supabase.auth.admin.updateUserById(id, { password });
-      if (passwordError) return { error: passwordError.message };
+      authUpdatePayload.password = password;
+    }
+
+    const { error: authUpdateError } = await supabase.auth.admin.updateUserById(id, authUpdatePayload);
+    if (authUpdateError) {
+      console.error("[Base ENEM] auth update failed", {
+        userId: id,
+        email,
+        message: authUpdateError.message,
+      });
+      return { error: authUpdateError.message };
     }
 
     return { id, success: "Aluno atualizado com sucesso." };
@@ -263,6 +307,10 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   });
 
   if (authError || !data.user) {
+    console.error("[Base ENEM] auth create failed", {
+      email,
+      message: authError?.message ?? "missing_user",
+    });
     return {
       error:
         authError?.message === "User already registered"
@@ -282,8 +330,13 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   });
 
   if (profileError) {
+    console.error("[Base ENEM] profile insert failed after auth create", {
+      userId,
+      email,
+      message: profileError.message,
+    });
     await supabase.auth.admin.deleteUser(userId);
-    return { error: profileError.message };
+    return { error: "Não foi possível criar o perfil do aluno. O usuário Auth foi revertido." };
   }
 
   return { id: userId, success: "Aluno cadastrado com sucesso." };
