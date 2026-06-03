@@ -225,6 +225,7 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
     hasClass: Boolean(classId),
     active,
   });
+  console.info("[Base ENEM] Iniciando criação de aluno");
 
   if (!fullName || !email) {
     return { error: "Informe nome e e-mail do usuário." };
@@ -307,6 +308,10 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   });
 
   if (authError || !data.user) {
+    console.error("[Base ENEM] Falha ao criar auth user", {
+      email,
+      message: authError?.message ?? "missing_user",
+    });
     console.error("[Base ENEM] auth create failed", {
       email,
       message: authError?.message ?? "missing_user",
@@ -315,11 +320,12 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
       error:
         authError?.message === "User already registered"
           ? "Este e-mail já está cadastrado."
-          : authError?.message || "Não foi possível criar o usuário no Auth.",
+          : `Erro ao criar usuário no Auth: ${authError?.message || "mensagem indisponível"}`,
     };
   }
 
   const userId = data.user.id;
+  console.info("[Base ENEM] Auth user criado com sucesso", { userId, email });
   const { error: profileError } = await supabase.from("profiles").insert({
     id: userId,
     email,
@@ -330,6 +336,11 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
   });
 
   if (profileError) {
+    console.error("[Base ENEM] Falha ao criar profile", {
+      userId,
+      email,
+      message: profileError.message,
+    });
     console.error("[Base ENEM] profile insert failed after auth create", {
       userId,
       email,
@@ -339,5 +350,6 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
     return { error: "Não foi possível criar o perfil do aluno. O usuário Auth foi revertido." };
   }
 
+  console.info("[Base ENEM] Profile criado com sucesso", { userId, email });
   return { id: userId, success: "Aluno cadastrado com sucesso." };
 }

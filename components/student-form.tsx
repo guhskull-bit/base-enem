@@ -61,17 +61,18 @@ export function StudentForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label>Nome completo</Label>
-          <Input value={fullName} onChange={(event) => setFullName(event.target.value)} />
+          <Input name="full_name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
         </div>
         <div>
           <Label>E-mail institucional</Label>
-          <Input value={email} onChange={(event) => setEmail(event.target.value)} />
+          <Input name="email" value={email} onChange={(event) => setEmail(event.target.value)} />
           {emailError ? <p className="mt-1 text-xs text-red-600">{emailError}</p> : null}
         </div>
         <div>
           <Label>Turma</Label>
           {classOptions.length ? (
             <select
+              name="class_id"
               value={classId}
               onChange={(event) => setClassId(event.target.value)}
               className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
@@ -90,6 +91,7 @@ export function StudentForm({
         <div>
           <Label>Role</Label>
           <select
+            name="role"
             value={role}
             onChange={(event) => setRole(event.target.value as "student" | "admin")}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
@@ -101,6 +103,7 @@ export function StudentForm({
         <div>
           <Label>Senha inicial</Label>
           <Input
+            name="password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
