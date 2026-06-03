@@ -41,6 +41,35 @@ function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function validateClassId(
+  supabase: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
+  classId: string | null,
+  role: "student" | "admin",
+) {
+  if (role !== "student") {
+    if (!classId) return null;
+  } else if (!classId) {
+    return { error: "Selecione uma turma para o aluno." } as const;
+  }
+
+  if (!classId) return null;
+
+  if (!isUuid(classId)) {
+    return { error: "Turma inválida. Selecione uma turma cadastrada." } as const;
+  }
+
+  const { data, error } = await supabase.from("classes").select("id").eq("id", classId).maybeSingle();
+  if (error || !data) {
+    return { error: "Turma inválida. Selecione uma turma cadastrada." } as const;
+  }
+
+  return { classId } as const;
+}
+
 async function ensureQuestionImagesBucket() {
   const supabase = createSupabaseAdminClient();
   if (!supabase) return null;
@@ -235,10 +264,6 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
     return { error: "Use um e-mail institucional @santamarcelina.edu.br." };
   }
 
-  if (!classId) {
-    return { error: "Selecione uma turma para o aluno." };
-  }
-
   if (!id && password.length < 6) {
     return { error: "A senha deve ter pelo menos 6 caracteres." };
   }
@@ -247,13 +272,20 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
     return { error: "A senha deve ter pelo menos 6 caracteres." };
   }
 
+  const classValidation = await validateClassId(supabase, classId, role);
+  if (classValidation && "error" in classValidation) {
+    return { error: classValidation.error };
+  }
+
+  const validClassId = classValidation?.classId ?? null;
+
   if (id) {
     const { error } = await supabase
       .from("profiles")
       .update({
         full_name: fullName,
         email,
-        class_id: classId,
+        class_id: validClassId,
         role,
         active,
       })
@@ -331,7 +363,7 @@ export async function saveStudentAction(formData: FormData): Promise<ActionResul
     email,
     full_name: fullName,
     role,
-    class_id: classId,
+    class_id: validClassId,
     active,
   });
 

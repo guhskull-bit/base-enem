@@ -19,7 +19,7 @@ export function StudentForm({
     role: "student" | "admin";
     active: boolean;
   };
-  classOptions?: Array<{ id: string; name: string }>;
+  classOptions?: Array<{ id: string; name: string; year?: string }>;
   onSubmit: (values: {
     id?: string;
     full_name: string;
@@ -81,11 +81,19 @@ export function StudentForm({
               {classOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
+                  {option.year ? ` · ${option.year}` : ""}
                 </option>
               ))}
             </select>
           ) : (
-            <Input value={classId} onChange={(event) => setClassId(event.target.value)} placeholder="class-1" />
+            <select
+              name="class_id"
+              disabled
+              value=""
+              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-500"
+            >
+              <option value="">Nenhuma turma disponível</option>
+            </select>
           )}
         </div>
         <div>
